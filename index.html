@@ -79,13 +79,14 @@
         fetchPromise
           .then((response) => response.json())
           .then((responseData) => {
-            const appUsers = responseData.comments.map((comment) => {
+            const appUsers = responseData.comments.map((comment, index) => {
               return {
                 name: comment.author.name,
                 date: currentDate(new Date(comment.date)),
                 likes: comment.likes,
                 text: comment.text,
                 isLiked: false,
+                id: index,
               };
             });
             users = appUsers;
@@ -120,9 +121,9 @@
 
       const renderUsers = () => {
         listElement.innerHTML = "";
-        users.forEach((user, index) => {
+        users.forEach((user) => {
           const listItem = document.createElement("li");
-          listItem.innerHTML = `<div class="comment" id="comment-${index}">
+          listItem.innerHTML = `<div class="comment" id="comment-${user.id}">
         <div class="comment-header">
           <div>${user.name}</div>
           <div>${user.date}</div>
@@ -136,18 +137,18 @@
         </div>
         <div class="comment-footer">
           <div class="likes">
-            <span id="likes-counter-${index}" class="likes-counter">${
+            <span id="likes-counter-${user.id}" class="likes-counter">${
             user.likes
           }</span>
-            <button id="like-button-${index}" class="like-button ${
+            <button id="like-button-${user.id}" class="like-button ${
             user.isLiked ? "-active-like" : "-no-active-like"
           }"></button>
           </div>
         </div>
       </div> `;
           listElement.appendChild(listItem);
-          attachLikeButtonListener(user, index);
-          attachTextButtonListener(user, index);
+          attachLikeButtonListener(user);
+          attachTextButtonListener(user);
         });
       };
 
