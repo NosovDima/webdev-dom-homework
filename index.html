@@ -67,17 +67,38 @@
       //   },
       // ];
       let users = [];
-      let fetchPromise;
 
-      function fetchPromiseArray() {
-        fetchPromise = fetch(
-          "https://wedev-api.sky.pro/api/v1/dima-nosov/comments",
-          {
-            method: "GET",
-          }
-        );
-        fetchPromise
-          .then((response) => response.json())
+      // function fetchPromiseArray() {
+      //   fetchPromise = fetch(
+      //     "https://wedev-api.sky.pro/api/v1/dima-nosov/comments",
+      //     {
+      //       method: "GET",
+      //     }
+      //   );
+      //   fetchPromise
+      //     .then((response) => response.json())
+      //     .then((responseData) => {
+      //       const appUsers = responseData.comments.map((comment, index) => {
+      //         return {
+      //           name: comment.author.name,
+      //           date: currentDate(new Date(comment.date)),
+      //           likes: comment.likes,
+      //           text: comment.text,
+      //           isLiked: false,
+      //           id: index,
+      //         };
+      //       });
+      //       users = appUsers;
+      //       renderUsers();
+      //     });
+      // }
+      const fetchAndRender = () => {
+        return fetch("https://wedev-api.sky.pro/api/v1/dima-nosov/comments", {
+          method: "GET",
+        })
+          .then((response) => {
+            return response.json();
+          })
           .then((responseData) => {
             const appUsers = responseData.comments.map((comment, index) => {
               return {
@@ -89,12 +110,11 @@
                 id: index,
               };
             });
+
             users = appUsers;
             renderUsers();
           });
-      }
-
-      fetchPromiseArray();
+      };
 
       const attachLikeButtonListener = (user) => {
         const likesButton = document.getElementById(`like-button-${user.id}`);
@@ -153,7 +173,10 @@
       };
 
       const toggleButton = () => {
-        if (inputNameElement.value && inputTextElement.value) {
+        if (
+          inputNameElement.value.trim().length >= 3 &&
+          inputTextElement.value.trim().length >= 3
+        ) {
           buttonElement.disabled = false;
           buttonElement.classList.remove("disabled");
         } else {
@@ -178,38 +201,67 @@
           inputTextElement.classList.add("error");
           return;
         }
+        if (inputNameElement.value.trim().length < 3) {
+          inputNameElement.classList.add("error");
+          return alert("Введенное имя слишком короткое");
+        }
 
-        const fetchPromise = fetch(
-          "https://wedev-api.sky.pro/api/v1/dima-nosov/comments",
-          {
-            method: "POST",
-            body: JSON.stringify({
-              name: inputNameElement.value
-                .replace(/</g, "&lt;")
-                .replace(/>/g, "&gt;"),
-              date: currentDate,
-              likes: 0,
-              text: inputTextElement.value
-                .replace(/</g, "&lt;")
-                .replace(/>/g, "&gt;"),
-              isLiked: false,
-            }),
-          }
-        );
+        if (inputTextElement.value.trim().length < 3) {
+          inputTextElement.classList.add("error");
+          return alert("Ваш комментарий слишком короткий");
+        }
 
-        fetchPromise.then((response) => {
-          response.json().then((responseData) => {
-            fetchPromiseArray();
-            attachLikeButtonListener(responseData);
-            attachTextButtonListener();
+        const startAt = Date.now();
+        console.log("Начинаем делать запрос");
+        buttonElement.disabled = true;
+        buttonElement.textContent = "Ваш комментарий добавляется...";
+
+        fetch("https://wedev-api.sky.pro/api/v1/dima-nosov/comments", {
+          method: "POST",
+          body: JSON.stringify({
+            name: inputNameElement.value
+              .replace(/</g, "&lt;")
+              .replace(/>/g, "&gt;"),
+            date: currentDate,
+            likes: 0,
+            text: inputTextElement.value
+              .replace(/</g, "&lt;")
+              .replace(/>/g, "&gt;"),
+            isLiked: false,
+            forceError: true,
+          }),
+        })
+          .then((response) => {
+            if (response.status === 201) {
+              return response.json();
+            } else {
+              // throw new Error("The server has failed");
+              return Promise.reject("The server has failed");
+            }
+          })
+          .then(() => {
+            return fetchAndRender();
+          })
+          .then(() => {
+            buttonElement.disabled = false;
+            buttonElement.textContent = "Написать";
+            inputNameElement.value = "";
+            inputTextElement.value = "";
+          })
+          .catch((error) => {
+            buttonElement.disabled = false;
+            buttonElement.textContent = "Написать";
+            alert("Произошла ошибка, повторите попытку позже");
+            console.warn(error);
           });
-        });
+        renderUsers();
+        attachLikeButtonListener(responseData);
+        attachTextButtonListener();
 
-        inputNameElement.value = "";
-        inputTextElement.value = "";
         buttonElement.disabled = true;
         buttonElement.classList.add("disabled");
       });
+      fetchAndRender();
 
       inputTextElement.addEventListener("keyup", (event) => {
         if (event.keyCode === 13) {
@@ -221,11 +273,6 @@
             buttonElement.click();
           }
         }
-      });
-      // 
-
-      fetchPromise.then(() => {
-        renderUsers();
       });
     </script>
   </body>
