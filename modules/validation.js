@@ -1,3 +1,4 @@
+
 export const trimValue = (element) => element.value.trim();
 
 export const setError = (element, message) => {};

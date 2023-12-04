@@ -1,112 +1,130 @@
-import { authorizedUser, loginUser, setToken } from "./api.js";
-import { getFetch } from "./main.js";
+import {
+    authorizedUser,
+    loginUser,
+    setToken,
+    setUser,
+    user,
+    token,
+} from "./api.js";
+import { getFetch } from "../main.js";
 
-let isLoginMode = true;
+export let isLoginMode = true;
+export let userName = localStorage.getItem("user");
+export let userLogin = localStorage.getItem("login");
+
 export function renderLogin() {
-  const loginHTML = `
-    <div class="container">
+    const loginHTML = `
+    <div id="list" class="comments1">
     <div class="password">
      <h2 class="title"> Форма ${isLoginMode ? "Входа" : "Регистрации"}</h2>
      ${
-       isLoginMode
-         ? ""
-         : `<input 
+         isLoginMode
+             ? ""
+             : `<input 
      type="text"
-     class="login-input" id="name-input-authorization"
+     class="name-input-authorization" id="name-input-authorization"
      placeholder="Имя"
     />`
      }</button>
-            
+     <div class="input-form">
+     <br>   
             <input 
               type="text"
               class="login-input" id="login-input"
               placeholder="Логин"
             />
+            <br>
             <input 
-              type="text"
+              type="password"
               class="password-input" id="password-input"
               placeholder="Пароль"
               rows="4"
             ></textarea>
-            <div class="add-form-row">
-              <button id="enter-button" class="enter-button " >${
-                isLoginMode ? "Войти" : "Зарегистрироваться"
+            </div>
+
+
+
+            <div class="add-form-row1">
+              <button id="enter-button" class="enter-button" >${
+                  isLoginMode ? "Авторизоваться" : "Зарегистрироваться"
               }</button>
-              <button id="sugnUp-button" class="enter-button " >Перейти ${
-                isLoginMode ? "К регистрации" : "Ко входу"
+              <button id="signUp-button" class="enter-button" > ${
+                  isLoginMode ? "Зарегистрироваться" : "Назад к авторизации"
               }</button></button>
             </div> 
-    
+    </div>
     </div>
     
     `;
-  const appElement = document.getElementById("app");
+    const appElement = document.getElementById("app");
 
-  appElement.innerHTML = loginHTML;
+    appElement.innerHTML = loginHTML;
 
-  document.getElementById("enter-button").addEventListener("click", () => {
-    if (isLoginMode) {
-      const login = document.getElementById("login-input").value;
-      const password = document.getElementById("password-input").value;
+    document.querySelector(".enter-button").addEventListener("click", () => {
+        if (isLoginMode) {
+            const login = document.querySelector("#login-input").value;
+            const password = document.querySelector("#password-input").value;
 
-      if (!login) {
-        alert("Введите логин");
-        return;
-      }
+            if (!login) {
+                alert("Введите логин");
+                return;
+            }
 
-      if (!password) {
-        alert("Введите пароль");
-        return;
-      }
+            if (!password) {
+                alert("Введите пароль");
+                return;
+            }
 
-      loginUser({
-        login: login,
-        password: password,
-      })
-        .then((user) => {
-          console.log(user);
-          setToken(`Bearer ${user.user.token}`);
-          getFetch();
-        })
-        .catch((error) => {
-          console.error(error.message);
-        });
-    } else {
-      const login = document.getElementById("login-input").value;
-      const password = document.getElementById("password-input").value;
-      const name = document.getElementById("name-input-authorization").value;
-      if (!login) {
-        alert("Введите логин");
-        return;
-      }
+            loginUser({
+                login: login,
+                password: password,
+            }).then((user) => {
+                localStorage.setItem("user", user.user.name);
+                localStorage.setItem("token", user.user.token);
+                setToken(user.user.token);
+                setUser(user.user.name);
 
-      if (!password) {
-        alert("Введите пароль");
-        return;
-      }
-      if (!name) {
-        alert("Введите имя");
-        return;
-      }
+                getFetch();
+            });
+        } else {
+            const login = document.querySelector("#login-input").value;
+            console.log(login);
+            const password = document.querySelector("#password-input").value;
+            const name = document.querySelector(
+                "#name-input-authorization",
+            ).value;
+            if (!login) {
+                alert("Введите логин");
+                return;
+            }
 
-      authorizedUser({
-        login: login,
-        password: password,
-        name: name,
-      })
-        .then((user) => {
-          console.log(user);
-          setToken(`Bearer ${user.user.token}`);
-          getFetch();
-        })
-        .catch((error) => {
-          console.error(error.message);
-        });
-    }
-  });
+            if (!password) {
+                alert("Введите пароль");
+                return;
+            }
+            if (!name) {
+                alert("Введите имя");
+                return;
+            }
 
-  document.getElementById("sugnUp-button").addEventListener("click", () => {
-    isLoginMode = !isLoginMode;
-    renderLogin();
-  });
+            authorizedUser({
+                login: login,
+                password: password,
+                name: name,
+            })
+                .then((user) => {
+                    console.log(user);
+                    setToken(`Bearer ${user.user.token}`);
+                    getFetch();
+                })
+                .catch((error) => {
+                    console.error(error.message);
+                });
+        }
+    });
+
+    document.getElementById("signUp-button").addEventListener("click", () => {
+        isLoginMode = !isLoginMode;
+        renderLogin();
+    });
 }
